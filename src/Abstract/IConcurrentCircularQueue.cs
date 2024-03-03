@@ -1,3 +1,5 @@
+using System.Diagnostics.Contracts;
+
 namespace Soenneker.Utils.ConcurrentCircularQueue.Abstract;
 
 /// <summary>
@@ -11,6 +13,7 @@ public interface IConcurrentCircularQueue<T>
     /// </summary>
     /// <param name="item">The item to check.</param>
     /// <returns><see langword="true"/> if the item is found in the queue; otherwise, <see langword="false"/>.</returns>
+    [Pure]
     bool Contains(T item);
 
     /// <summary>
@@ -29,5 +32,6 @@ public interface IConcurrentCircularQueue<T>
     /// <summary>
     /// Gets the number of items in the queue.
     /// </summary>
+    [Pure]
     int Count { get; }
 }
