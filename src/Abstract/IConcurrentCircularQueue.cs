@@ -1,4 +1,5 @@
 using System.Diagnostics.Contracts;
+using System.Threading.Tasks;
 
 namespace Soenneker.Utils.ConcurrentCircularQueue.Abstract;
 
@@ -14,24 +15,22 @@ public interface IConcurrentCircularQueue<T>
     /// <param name="item">The item to check.</param>
     /// <returns><see langword="true"/> if the item is found in the queue; otherwise, <see langword="false"/>.</returns>
     [Pure]
-    bool Contains(T item);
+    ValueTask<bool> Contains(T item);
 
     /// <summary>
     /// Enqueues an item into the queue.
     /// </summary>
     /// <param name="item">The item to enqueue.</param>
-    void Enqueue(T item);
+    ValueTask Enqueue(T item);
 
     /// <summary>
     /// Tries to dequeue an item from the queue.
     /// </summary>
-    /// <param name="result">When this method returns, contains the dequeued item, if the operation succeeded; otherwise, the default value.</param>
-    /// <returns><see langword="true"/> if an item was dequeued successfully; otherwise, <see langword="false"/>.</returns>
-    bool TryDequeue(out T result);
+    ValueTask<(bool success, T? result)> TryDequeue();
 
     /// <summary>
     /// Gets the number of items in the queue.
     /// </summary>
     [Pure]
-    int Count { get; }
+    ValueTask<int> Count();
 }

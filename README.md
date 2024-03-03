@@ -14,18 +14,19 @@ dotnet add package Soenneker.Utils.ConcurrentCircularQueue
 ## Usage
 
 ### Creating an Instance
-Instantiate a `ConcurrentCircularQueue<T>` object by specifying the maximum size of the queue.
+Instantiate a `ConcurrentCircularQueue<T>` object by specifying the maximum size of the queue. Optionally, asynchronous locking is available for perfect `.Contains().`
 ```csharp
-var myQueue = new ConcurrentCircularQueue<int>(3); // Creates a queue with a maximum size of 3.
+// Creates a queue with a maximum size of 3.
+var myQueue = new ConcurrentCircularQueue<int>(3, locking: false);
 ```
 
 ### Enqueueing Items
 Add an item to the queue. If the queue has reached its maximum size, the oldest item will be removed.
 ```csharp
-myQueue.Enqueue(1);
-myQueue.Enqueue(2);
-myQueue.Enqueue(3);
-myQueue.Enqueue(4);
+await myQueue.Enqueue(1);
+await myQueue.Enqueue(2);
+await myQueue.Enqueue(3);
+await myQueue.Enqueue(4);
 
 // The queue now contains 2, 3, and 4.
 ```
@@ -33,17 +34,17 @@ myQueue.Enqueue(4);
 ### Dequeueing Items
 Remove and return the oldest item from the queue.
 ```csharp
-bool success = myQueue.TryDequeue(out var item);
+(bool success, int result) = await myQueue.TryDequeue();
 ```
 
 ### Checking If an Item Exists
 Determine if a specific item is in the queue.
 ```csharp
-bool exists = myQueue.Contains(item);
+bool exists = await myQueue.Contains(item);
 ```
 
 ### Count
 Retrieve the current number of items in the queue.
 ```csharp
-int currentCount = myQueue.Count;
+int currentCount = await myQueue.Count();
 ```
