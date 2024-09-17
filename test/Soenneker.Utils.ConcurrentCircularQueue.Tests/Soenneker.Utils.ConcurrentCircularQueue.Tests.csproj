@@ -31,7 +31,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\src\Soenneker.Utils.ConcurrentCircularQueue.csproj" />
+        <ProjectReference Include="..\..\src\Soenneker.Utils.ConcurrentCircularQueue.csproj" />
     </ItemGroup>
 
 </Project>
