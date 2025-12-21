@@ -1,10 +1,11 @@
 using Soenneker.Utils.ConcurrentCircularQueue.Abstract;
 using System.Collections.Concurrent;
-using System.Threading;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Nito.AsyncEx;
+using Soenneker.Asyncs.Locks;
+using Soenneker.Extensions.ValueTask;
+using Soenneker.Atomics.ValueInts;
 
 namespace Soenneker.Utils.ConcurrentCircularQueue;
 
@@ -13,9 +14,10 @@ public class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
 {
     private readonly ConcurrentQueue<T> _queue = new();
     private readonly int _maxSize;
-    private int _count;
-    private readonly bool _locking;
 
+    private ValueAtomicInt _count;
+
+    private readonly bool _locking;
     private readonly AsyncLock? _asyncLock;
 
     public ConcurrentCircularQueue(int maxSize, bool locking = false)
@@ -28,6 +30,8 @@ public class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
 
         if (_locking)
             _asyncLock = new AsyncLock();
+
+        _count = new ValueAtomicInt(0);
     }
 
     public async ValueTask<bool> Contains(T item)
@@ -35,10 +39,9 @@ public class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
         if (!_locking)
             return _queue.Contains(item);
 
-        using (await _asyncLock!.LockAsync().ConfigureAwait(false))
-        {
+        using (await _asyncLock!.Lock()
+                                .NoSync())
             return _queue.Contains(item);
-        }
     }
 
     public async ValueTask Enqueue(T item)
@@ -49,40 +52,36 @@ public class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
             return;
         }
 
-        using (await _asyncLock!.LockAsync().ConfigureAwait(false))
-        {
+        using (await _asyncLock!.Lock()
+                                .NoSync())
             EnqueueInternal(item);
-        }
     }
 
     private void EnqueueInternal(T item)
     {
         _queue.Enqueue(item);
-        int countAfterIncrement = Interlocked.Increment(ref _count);
 
-        // Ensure the queue size does not exceed maxSize
-        if (countAfterIncrement <= _maxSize)
-            return;
+        int newCount = _count.Increment();
 
-        if (_queue.TryDequeue(out T _))
+        // Ensure the queue size does not exceed maxSize (handles bursts/contended callers)
+        while (newCount > _maxSize && _queue.TryDequeue(out _))
         {
-            Interlocked.Decrement(ref _count);
+            newCount = _count.Decrement();
         }
     }
 
     public async ValueTask<(bool success, T? result)> TryDequeue()
     {
-        T? result;
-
         if (!_locking)
         {
-            bool success = TryDequeueInternal(out result);
+            bool success = TryDequeueInternal(out T? result);
             return (success, result);
         }
 
-        using (await _asyncLock!.LockAsync().ConfigureAwait(false))
+        using (await _asyncLock!.Lock()
+                                .NoSync())
         {
-            bool success = TryDequeueInternal(out result);
+            bool success = TryDequeueInternal(out T? result);
             return (success, result);
         }
     }
@@ -92,9 +91,7 @@ public class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
         bool dequeueResult = _queue.TryDequeue(out result);
 
         if (dequeueResult)
-        {
-            Interlocked.Decrement(ref _count);
-        }
+            _count.Decrement();
 
         return dequeueResult;
     }
@@ -102,11 +99,10 @@ public class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
     public async ValueTask<int> Count()
     {
         if (!_locking)
-            return _count;
+            return _count.Read();
 
-        using (await _asyncLock!.LockAsync().ConfigureAwait(false))
-        {
-            return _count;
-        }
+        using (await _asyncLock!.Lock()
+                                .NoSync())
+            return _count.Read();
     }
 }
