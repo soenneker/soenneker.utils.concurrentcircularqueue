@@ -25,7 +25,7 @@
         <PackageReference Include="AwesomeAssertions" Version="9.4.0" /><PackageReference Include="xUnit.v3" Version="3.2.2" /></ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Soenneker.Utils.ConcurrentCircularQueue.csproj" />
+        <ProjectReference Include="..\..\src\Soenneker.Utils.ConcurrentCircularQueue\Soenneker.Utils.ConcurrentCircularQueue.csproj" />
     </ItemGroup>
 
     <ItemGroup>
