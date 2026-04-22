@@ -1,4 +1,3 @@
-using Xunit;
 using AwesomeAssertions;
 using System;
 using System.Threading.Tasks;
@@ -7,7 +6,7 @@ namespace Soenneker.Utils.ConcurrentCircularQueue.Tests;
 
 public class ConcurrentCircularQueueTests
 {
-    [Fact]
+    [Test]
     public async Task Enqueue_AddsItemToQueue()
     {
         // Arrange
@@ -20,7 +19,7 @@ public class ConcurrentCircularQueueTests
         (await queue.Count()).Should().Be(1);
     }
 
-    [Fact]
+    [Test]
     public async Task Enqueue_WithMaxSize_RemovesOldestItem()
     {
         // Arrange
@@ -36,7 +35,7 @@ public class ConcurrentCircularQueueTests
         (await queue.Contains(1)).Should().BeFalse(); // Oldest item should be removed
     }
 
-    [Fact]
+    [Test]
     public async Task TryDequeue_RemovesItemFromQueue()
     {
         // Arrange
@@ -52,7 +51,7 @@ public class ConcurrentCircularQueueTests
         (await queue.Count()).Should().Be(0);
     }
 
-    [Fact]
+    [Test]
     public async Task TryDequeue_ReturnsFalse_WhenQueueIsEmpty()
     {
         // Arrange
@@ -67,14 +66,14 @@ public class ConcurrentCircularQueueTests
         (await queue.Count()).Should().Be(0);
     }
 
-    [Fact]
+    [Test]
     public void Enqueue_WithZeroMaxSize_ThrowsArgumentException()
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => new ConcurrentCircularQueue<int>(0));
     }
 
-    [Fact]
+    [Test]
     public async Task Contains_ReturnsTrue_WhenItemExists()
     {
         // Arrange
@@ -85,7 +84,7 @@ public class ConcurrentCircularQueueTests
         (await queue.Contains(1)).Should().BeTrue();
     }
 
-    [Fact]
+    [Test]
     public async Task Contains_ReturnsFalse_WhenItemDoesNotExist()
     {
         // Arrange
