@@ -13,7 +13,8 @@ namespace Soenneker.Utils.ConcurrentCircularQueue;
 /// <inheritdoc cref="IConcurrentCircularQueue{T}"/>
 public sealed class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
 {
-    private readonly ConcurrentQueue<T> _queue = new();
+    private readonly ConcurrentQueue<T>? _concurrentQueue;
+    private readonly Queue<T>? _lockedQueue;
     private readonly int _maxSize;
 
     private ValueAtomicInt _count;
@@ -30,7 +31,14 @@ public sealed class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
         _locking = locking;
 
         if (locking)
+        {
             _asyncLock = new AsyncLock();
+            _lockedQueue = new Queue<T>(maxSize);
+        }
+        else
+        {
+            _concurrentQueue = new ConcurrentQueue<T>();
+        }
 
         _count = new ValueAtomicInt(0);
     }
@@ -56,7 +64,8 @@ public sealed class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
     {
         var comparer = EqualityComparer<T>.Default;
 
-        foreach (T current in _queue)
+        IEnumerable<T> queue = _locking ? _lockedQueue! : _concurrentQueue!;
+        foreach (T current in queue)
         {
             if (comparer.Equals(current, item))
                 return true;
@@ -87,12 +96,21 @@ public sealed class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void EnqueueInternal(T item)
     {
-        _queue.Enqueue(item);
+        if (_locking)
+        {
+            Queue<T> queue = _lockedQueue!;
+            queue.Enqueue(item);
+            if (queue.Count > _maxSize)
+                queue.Dequeue();
+            return;
+        }
+
+        _concurrentQueue!.Enqueue(item);
 
         int newCount = _count.Increment();
 
         // Ensure the queue size does not exceed maxSize (handles bursts/contended callers)
-        while (newCount > _maxSize && _queue.TryDequeue(out _))
+        while (newCount > _maxSize && _concurrentQueue.TryDequeue(out _))
         {
             newCount = _count.Decrement();
         }
@@ -123,7 +141,20 @@ public sealed class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool TryDequeueInternal(out T result)
     {
-        bool dequeueResult = _queue.TryDequeue(out result);
+        if (_locking)
+        {
+            Queue<T> queue = _lockedQueue!;
+            if (queue.Count == 0)
+            {
+                result = default!;
+                return false;
+            }
+
+            result = queue.Dequeue();
+            return true;
+        }
+
+        bool dequeueResult = _concurrentQueue!.TryDequeue(out result);
 
         if (dequeueResult)
             _count.Decrement();
@@ -144,6 +175,6 @@ public sealed class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
     {
         using (await _asyncLock!.Lock()
                                 .NoSync())
-            return _count.Read();
+            return _lockedQueue!.Count;
     }
 }
