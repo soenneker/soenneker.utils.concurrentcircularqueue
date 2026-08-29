@@ -21,16 +21,19 @@ public interface IConcurrentCircularQueue<T>
     /// Enqueues an item into the queue.
     /// </summary>
     /// <param name="item">The item to enqueue.</param>
+    /// <returns>Enqueues an item into the queue.</returns>
     ValueTask Enqueue(T item);
 
     /// <summary>
     /// Tries to dequeue an item from the queue.
     /// </summary>
+    /// <returns>Tries to dequeue an item from the queue.</returns>
     ValueTask<(bool success, T? result)> TryDequeue();
 
     /// <summary>
     /// Gets the number of items in the queue.
     /// </summary>
+    /// <returns>The the number of items in the queue.</returns>
     [Pure]
     ValueTask<int> Count();
 }
