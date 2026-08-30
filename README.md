@@ -3,49 +3,41 @@
 [![](https://img.shields.io/nuget/dt/soenneker.utils.concurrentcircularqueue.svg?style=for-the-badge)](https://www.nuget.org/packages/soenneker.utils.concurrentcircularqueue/)
 [![](https://img.shields.io/github/actions/workflow/status/soenneker/soenneker.utils.concurrentcircularqueue/codeql.yml?label=CodeQL&style=for-the-badge)](https://github.com/soenneker/soenneker.utils.concurrentcircularqueue/actions/workflows/codeql.yml)
 
-# ![](https://user-images.githubusercontent.com/4441470/224455560-91ed3ee7-f510-4041-a8d2-3fc093025112.png) Soenneker.Utils.ConcurrentCircularQueue
-### A thread-safe collection type for a fixed length of elements, overwriting the oldest element
+# Soenneker.Utils.ConcurrentCircularQueue
+
+A thread-safe, fixed-capacity FIFO queue that discards the oldest item when a new item exceeds its capacity.
 
 ## Installation
 
-```
+```bash
 dotnet add package Soenneker.Utils.ConcurrentCircularQueue
 ```
 
 ## Usage
 
-### Creating an Instance
-Instantiate a `ConcurrentCircularQueue<T>` object by specifying the maximum size of the queue. Optionally, asynchronous locking is available for perfect `.Contains().`
 ```csharp
-// Creates a queue with a maximum size of 3.
-var myQueue = new ConcurrentCircularQueue<int>(3, locking: false);
+var recentIds = new ConcurrentCircularQueue<int>(maxSize: 3);
+
+await recentIds.Enqueue(10);
+await recentIds.Enqueue(20);
+await recentIds.Enqueue(30);
+await recentIds.Enqueue(40); // 10 is discarded
+
+(bool success, int? oldest) = await recentIds.TryDequeue(); // 20
+int count = await recentIds.Count();                         // 2
+bool contains = await recentIds.Contains(40);                // true
 ```
 
-### Enqueueing Items
-Add an item to the queue. If the queue has reached its maximum size, the oldest item will be removed.
-```csharp
-await myQueue.Enqueue(1);
-await myQueue.Enqueue(2);
-await myQueue.Enqueue(3);
-await myQueue.Enqueue(4);
+`TryDequeue()` returns immediately with `success == false` when the queue is empty. This is a collection, not a producer/consumer channel: it has no operation that waits for a future item.
 
-// The queue now contains 2, 3, and 4.
+## Concurrency modes
+
+The default mode uses `ConcurrentQueue<T>` and atomic counting. Operations are thread-safe, but `Contains()` and `Count()` are observations made while other callers may be changing the queue.
+
+```csharp
+var queue = new ConcurrentCircularQueue<Job>(100, locking: true);
 ```
 
-### Dequeueing Items
-Remove and return the oldest item from the queue.
-```csharp
-(bool success, int result) = await myQueue.TryDequeue();
-```
+With `locking: true`, enqueue, dequeue, count, and contains operations are serialized through an asynchronous lock. This provides a consistent point-in-time observation relative to the other queue operations, at the cost of contention and asynchronous lock overhead.
 
-### Checking If an Item Exists
-Determine if a specific item is in the queue.
-```csharp
-bool exists = await myQueue.Contains(item);
-```
-
-### Count
-Retrieve the current number of items in the queue.
-```csharp
-int currentCount = await myQueue.Count();
-```
+Neither mode makes a multi-call sequence atomic. For example, another caller can change the queue between `Contains()` and `TryDequeue()`.
