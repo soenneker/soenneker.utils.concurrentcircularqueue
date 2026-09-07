@@ -62,10 +62,12 @@ public sealed class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool QueueContains(T item)
     {
+        if (_locking)
+            return _lockedQueue!.Contains(item);
+
         var comparer = EqualityComparer<T>.Default;
 
-        IEnumerable<T> queue = _locking ? _lockedQueue! : _concurrentQueue!;
-        foreach (T current in queue)
+        foreach (T current in _concurrentQueue!)
         {
             if (comparer.Equals(current, item))
                 return true;
@@ -99,9 +101,10 @@ public sealed class ConcurrentCircularQueue<T> : IConcurrentCircularQueue<T>
         if (_locking)
         {
             Queue<T> queue = _lockedQueue!;
-            queue.Enqueue(item);
-            if (queue.Count > _maxSize)
+            if (queue.Count == _maxSize)
                 queue.Dequeue();
+
+            queue.Enqueue(item);
             return;
         }
 
