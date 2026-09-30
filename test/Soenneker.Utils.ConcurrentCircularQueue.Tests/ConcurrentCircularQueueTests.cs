@@ -7,7 +7,7 @@ namespace Soenneker.Utils.ConcurrentCircularQueue.Tests;
 public class ConcurrentCircularQueueTests
 {
     [Test]
-    public async Task Enqueue_AddsItemToQueue()
+    public async ValueTask Enqueue_AddsItemToQueue()
     {
         // Arrange
         var queue = new ConcurrentCircularQueue<int>(3);
@@ -20,7 +20,7 @@ public class ConcurrentCircularQueueTests
     }
 
     [Test]
-    public async Task Enqueue_WithMaxSize_RemovesOldestItem()
+    public async ValueTask Enqueue_WithMaxSize_RemovesOldestItem()
     {
         // Arrange
         var queue = new ConcurrentCircularQueue<int>(2);
@@ -36,7 +36,7 @@ public class ConcurrentCircularQueueTests
     }
 
     [Test]
-    public async Task TryDequeue_RemovesItemFromQueue()
+    public async ValueTask TryDequeue_RemovesItemFromQueue()
     {
         // Arrange
         var queue = new ConcurrentCircularQueue<int>(3);
@@ -52,7 +52,7 @@ public class ConcurrentCircularQueueTests
     }
 
     [Test]
-    public async Task TryDequeue_ReturnsFalse_WhenQueueIsEmpty()
+    public async ValueTask TryDequeue_ReturnsFalse_WhenQueueIsEmpty()
     {
         // Arrange
         var queue = new ConcurrentCircularQueue<int>(3);
@@ -74,7 +74,7 @@ public class ConcurrentCircularQueueTests
     }
 
     [Test]
-    public async Task Contains_ReturnsTrue_WhenItemExists()
+    public async ValueTask Contains_ReturnsTrue_WhenItemExists()
     {
         // Arrange
         var queue = new ConcurrentCircularQueue<int>(3);
@@ -85,7 +85,7 @@ public class ConcurrentCircularQueueTests
     }
 
     [Test]
-    public async Task Contains_ReturnsFalse_WhenItemDoesNotExist()
+    public async ValueTask Contains_ReturnsFalse_WhenItemDoesNotExist()
     {
         // Arrange
         var queue = new ConcurrentCircularQueue<int>(3);
