@@ -1,13 +1,14 @@
 using AwesomeAssertions;
 using System;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace Soenneker.Utils.ConcurrentCircularQueue.Tests;
 
 public class ConcurrentCircularQueueTests
 {
     [Test]
-    public async ValueTask Enqueue_AddsItemToQueue()
+    public async ValueTask Enqueue_AddsItemToQueue(CancellationToken cancellationToken)
     {
         // Arrange
         var queue = new ConcurrentCircularQueue<int>(3);
@@ -20,7 +21,7 @@ public class ConcurrentCircularQueueTests
     }
 
     [Test]
-    public async ValueTask Enqueue_WithMaxSize_RemovesOldestItem()
+    public async ValueTask Enqueue_WithMaxSize_RemovesOldestItem(CancellationToken cancellationToken)
     {
         // Arrange
         var queue = new ConcurrentCircularQueue<int>(2);
@@ -36,7 +37,7 @@ public class ConcurrentCircularQueueTests
     }
 
     [Test]
-    public async ValueTask TryDequeue_RemovesItemFromQueue()
+    public async ValueTask TryDequeue_RemovesItemFromQueue(CancellationToken cancellationToken)
     {
         // Arrange
         var queue = new ConcurrentCircularQueue<int>(3);
@@ -52,7 +53,7 @@ public class ConcurrentCircularQueueTests
     }
 
     [Test]
-    public async ValueTask TryDequeue_ReturnsFalse_WhenQueueIsEmpty()
+    public async ValueTask TryDequeue_ReturnsFalse_WhenQueueIsEmpty(CancellationToken cancellationToken)
     {
         // Arrange
         var queue = new ConcurrentCircularQueue<int>(3);
@@ -74,7 +75,7 @@ public class ConcurrentCircularQueueTests
     }
 
     [Test]
-    public async ValueTask Contains_ReturnsTrue_WhenItemExists()
+    public async ValueTask Contains_ReturnsTrue_WhenItemExists(CancellationToken cancellationToken)
     {
         // Arrange
         var queue = new ConcurrentCircularQueue<int>(3);
@@ -85,7 +86,7 @@ public class ConcurrentCircularQueueTests
     }
 
     [Test]
-    public async ValueTask Contains_ReturnsFalse_WhenItemDoesNotExist()
+    public async ValueTask Contains_ReturnsFalse_WhenItemDoesNotExist(CancellationToken cancellationToken)
     {
         // Arrange
         var queue = new ConcurrentCircularQueue<int>(3);
